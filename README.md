@@ -113,8 +113,7 @@ This guide calls the databases `acore_world`, `acore_characters` and
 `acore_auth`, which are the default names. If yours differ, replace them
 throughout.
 
-**The WoW-mods installer**, `installer.exe`, from the `installer/` folder of
-this repository. It carries what it needs; nothing else to install.
+**The WoW-mods installer**, `installer.exe`, from the [WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases). It carries what it needs; nothing else to install.
 
 **A 3.3.5a client**, closed while the installer runs: it writes the tokens into
 the game's archives.
@@ -126,7 +125,7 @@ the game's archives.
 ### 3.1 Run the installer
 
 Stop the world server and close the game, then run `installer.exe`, the
-WoW-mods installer (`installer/` folder of this repository), and give it this package's
+WoW-mods installer ([WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases)), and give it this package's
 folder, or drop the folder on `installer.exe`. Keep the package where you
 downloaded it: the installer refuses to run from your server's `modules`
 folder.
