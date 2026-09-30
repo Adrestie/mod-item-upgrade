@@ -1,77 +1,17 @@
 # mod-item-upgrade
 
-An AzerothCore module (WotLK 3.3.5a) that lets players raise the stats on their
-gear, rank by rank, in exchange for gold and tokens. At the top rank a stat is
-worth twice its original value. Weapons have their own two tracks, damage and
-swing speed, and looted items can arrive already upgraded.
+An AzerothCore module (WotLK 3.3.5a) that lets players raise the stats of their
+gear rank by rank, for gold and tokens, in a window (ALE and AIO). Weapons have
+two tracks of their own, damage and swing speed, and looted items can arrive
+already upgraded.
 
 This is an extended fork of
-**[silviu20092/mod-item-upgrade](https://github.com/silviu20092/mod-item-upgrade)**.
-The whole upgrade engine is that author's work; see [Credits](#12-credits) and
-[section 11](#11-differences-from-the-original-module) for what we changed.
-
-Players upgrade through **a window** opened from a minimap button, a slash
-command or a right click on a token. It shows every stat of an item and the
-weapon's damage and speed at once, prices the whole selection, and buys several
-ranks in one click. All the rules stay in the C++ module: the window only shows
-what the module tells it and sends back what the player picked. There is no NPC.
-When the client runs the ForeverUI interface (mod-forever-ui), the window and
-the minimap button give way to an "Item Upgrades" tab of a Progression window in
-the Camelot style, which Attriboost shares when it is installed too. The module
-draws that window itself, with the textures ForeverUI installs, and only asks
-ForeverUI to add its button to the micro menu. Without ForeverUI nothing
-changes.
-
-Every text the module shows, in the chat or in the window, is in English and in
-French, and follows the language of each player's client. Adding a language
-takes a few SQL rows, no rebuild (section 6.13).
-
-The guide below is written for someone who has never installed this module. It
-gives complete commands and states what you should see after each step.
-Following it without changing anything reproduces the configuration of the
-Papota server: 41 stats, 20 ranks, +5 % per rank, 350 gold per rank.
+**[silviu20092/mod-item-upgrade](https://github.com/silviu20092/mod-item-upgrade)**;
+[section 11](#11-differences-from-the-original-module) lists what changed.
 
 ---
 
-## 1. What the package contains
-
-```
-mod-item-upgrade/
-├── README.md                     this guide
-├── LICENSE                       MIT
-├── include.sh
-├── conf/
-│   └── mod_item_upgrade.conf.dist    weapons, random upgrades, allowed stats
-├── src/                              the C++ module (10 files)
-├── data/
-│   ├── sql/                          applied by the server on its own
-│   │   ├── db-world/base/
-│   │   │   ├── 01_item_upgrade_world.sql     tokens and their item_dbc rows
-│   │   │   ├── 02_item_upgrade_strings.sql   every text, English and French
-│   │   │   └── 03_item_upgrade_commands.sql  help of the chat commands
-│   │   └── db-characters/
-│   │       ├── base/b_*.sql                  the module's own tables
-│   │       ├── base/c_item_upgrade_scale.sql ranks, gains and prices
-│   │       └── updates/                      upstream update files
-│   ├── lua/
-│   │   ├── ItemUpgrade_Client.lua           the window, pushed by AIO
-│   │   └── ItemUpgrade_Serveur.lua          sends the window its texts
-│   └── art/Interface/ItemUpgrade/           the portrait of the Progression window,
-│                                            written into the game by the installer
-├── installer.json                    what the WoW-mods installer puts in place and
-│                                     removes: the tokens' rows in Item.dbc, the files,
-│                                     the database tables and rows
-├── optional/
-│   └── mythic_plus_token_loot.sql    token drops for a Mythic+ system
-└── docs/
-    └── changes_vs_upstream.diff      our changes against the original
-```
-
-Everything under `data/sql` is applied by the server itself at startup, so there
-are no SQL commands to type. `optional/` sits outside on purpose: the server
-never touches it.
-
-### Identifiers used
+## 1. Identifiers used
 
 | What | Id |
 |---|---|
@@ -122,42 +62,30 @@ the game's archives.
 
 ## 3. Server installation
 
-### 3.1 Run the installer
+### 3.1 Install
 
-Stop the world server and close the game, then run `installer.exe`, the
-WoW-mods installer ([WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases)), and give it this package's
-folder, or drop the folder on `installer.exe`. Keep the package where you
-downloaded it: the installer refuses to run from your server's `modules`
-folder.
+Stop the world server and close the game, then run `installer.exe` and give it
+this folder; keep it outside your server's `modules` folder, where the
+installer refuses to run. The first time, it asks for the world server folder
+(the one holding `worldserver.exe`) and the game folder (the one holding
+`Wow.exe` and `Data`). It copies the module into your sources, writes its
+configuration and Lua scripts, and adds the tokens to the server's `Item.dbc`
+and, with the module's image, to the game's archives.
 
-Its window asks for two folders the first time, then remembers them:
+By hand instead:
 
-- the world server folder, the one holding `worldserver.exe`;
-- the game folder, the one holding `Wow.exe` and `Data`.
+1. Copy this folder to `modules/mod-item-upgrade` in your AzerothCore sources.
+2. Copy `conf/mod_item_upgrade.conf.dist` to `configs/modules/`, once as is and
+   once as `mod_item_upgrade.conf`.
+3. Copy both files of `data/lua/` to `lua_scripts/ItemUpgrade/`.
+4. Add the rows of the `dbc` entry of `installer.json` to the server's
+   `dbc/Item.dbc` with a DBC editor.
 
-It finds the rest from there: the configuration folder, the `Data\dbc` folder
-and the databases in `worldserver.conf`, the Lua script folder in
-`mod_ale.conf` (`lua_scripts` by default), your AzerothCore sources in the
-build folder's `CMakeCache.txt`, and `mysql.exe`. It shows whatever it found
-of the module before changing anything.
-
-Finding nothing of the module, it offers **Install**, which puts in place:
-
-- the module is copied to `modules/mod-item-upgrade` in your sources;
-- `mod_item_upgrade.conf` and `mod_item_upgrade.conf.dist` are written to the
-  module configuration folder;
-- both Lua files go to `lua_scripts/ItemUpgrade/`, which sorts after
-  `AIO_Server` as it must;
-- the five tokens are added to the server's `Item.dbc` and to the game's,
-  directly inside the archive it comes from, and the module's image
-  (`data/art`) is written under `Interface\ItemUpgrade` (section 4).
-
-It reads everything back from the disk and ends with `Installation complete.`,
-followed by the build commands.
+The game side is in section 4.
 
 ### 3.2 Build
 
-Stop the server, then, from your build folder:
+From your build folder, with the world server stopped:
 
 ```
 cmake .
@@ -166,167 +94,60 @@ cmake --build . --config RelWithDebInfo --target worldserver
 
 On Linux, `cmake .` then `make -j$(nproc)`.
 
-Stopping the server is mandatory: while `worldserver` runs, its file is locked
-and linking fails. The `cmake .` step is what makes the build system notice the
-module's files; skipping it is the usual reason a module seems to do nothing.
+### 3.3 Start up
 
-> **Check.** The build ends without errors and the `worldserver` file is dated
-> today. Proof that the module really made it into the binary comes at startup,
-> in 3.4.
+On the first start, the core updater applies the module's SQL: its tables, the
+tokens, the texts and the upgrade scale (41 stats, 20 ranks). The shipped
+configuration is the Papota one; section 6 explains each setting.
 
-### 3.3 Configure
+### 3.4 Give the tokens a source
 
-The installer has written `mod_item_upgrade.conf`, a copy of the shipped
-`.dist`, which is the file the server reads. Without it the module would run on
-the defaults written in its code, which differ from the shipped values (9 stats
-instead of 41, free weapon upgrades).
-
-> **Check.** At startup, `Server.log` lists `mod_item_upgrade.conf` under "Using
-> modules configuration", and holds no line `Missing property ItemUpgrade.`.
-
-The shipped values are the Papota ones. Section 6 explains each of them.
-
-### 3.4 Start the server
-
-Start the server normally and let it finish loading. On this first start the
-updater applies every SQL file in `data/sql`: the module's tables, the tokens,
-the texts, the command help and the upgrade scale.
-
-> **Check.** In `Server.log`, three things:
-> - a line `Loading item upgrade mod custom tables...`, which proves the module
->   is compiled in;
-> - lines mentioning the applied SQL files, among them
->   `01_item_upgrade_world.sql`, `02_item_upgrade_strings.sql` and
->   `c_item_upgrade_scale.sql`;
-> - no error line containing `mod_item_upgrade` or `mod-item-upgrade`.
->
-> Then the scale and the texts are in place:
-> ```
-> "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root -p acore_characters -e "SELECT COUNT(DISTINCT stat_type) AS stats, MAX(stat_rank) AS max_rank, COUNT(*) AS rows_total FROM mod_item_upgrade_stats;"
-> "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root -p acore_world -e "SELECT (SELECT COUNT(*) FROM module_string WHERE module = 'mod-item-upgrade') AS english, (SELECT COUNT(*) FROM module_string_locale WHERE module = 'mod-item-upgrade' AND locale = 'frFR') AS french;"
-> ```
-> Expected: 41 stats, maximum rank 20, 820 rows; then 113 English texts and
-> 113 French ones. If you get 8 stats over 2 ranks, only the module's own files
-> were applied and `c_item_upgrade_scale.sql` was not; see section 8.
-
-### 3.5 Give the tokens a source
-
-Without tokens, players stop at rank 3. It is up to you to decide where they
-come from. Three ways, from the simplest to the most integrated.
-
-**A vendor.** Add the tokens to the shop of an existing NPC whose entry you
-know. The price comes from `BuyPrice` in `item_template`; here, 5 000 gold.
+Nothing hands them out by default, and without tokens players stop at rank 3.
+To try it right away: `.additem 83050 5`. For good, on a vendor or a loot table:
 
 ```sql
-UPDATE item_template SET BuyPrice = 50000000 WHERE entry BETWEEN 83050 AND 83054;
 INSERT INTO npc_vendor (entry, slot, item, maxcount, incrtime, ExtendedCost)
 VALUES (YOUR_VENDOR_ENTRY, 0, 83050, 0, 0, 0);
-```
 
-**A boss drop.** The token drops with the given chance, here 25 %, from the
-creature whose entry you give.
-
-```sql
 INSERT INTO creature_loot_template (Entry, Item, Reference, Chance, QuestRequired, LootMode, GroupId, MinCount, MaxCount)
 VALUES (YOUR_CREATURE_ENTRY, 83050, 0, 25, 0, 1, 0, 1, 1);
 ```
 
-**A Mythic+ system.** If your server runs the Papota Mythic+ scripts,
-`optional/mythic_plus_token_loot.sql` reproduces our distribution: on each
-completed run, a number of tokens that depends on the keystone tier. Apply it by
-hand:
-
-```
-"C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root -p acore_world < "optional\mythic_plus_token_loot.sql"
-```
-
-Without that system the file does nothing useful. Skip it.
+`optional/mythic_plus_token_loot.sql` does it for the Papota Mythic+ scripts;
+apply it by hand if you run them.
 
 ---
 
 ## 4. Client side
 
-Two things on each client: the AIO addon, and the tokens in `Item.dbc`.
+The installer has written the tokens and the image into the game folder you
+gave it; its output names the archive. Give that archive to the other players.
 
-**The AIO addon.** Copy the `AIO_Client` folder of the AIO repository into the
-client's `Interface\AddOns` folder, then tick it in the AddOns list of the
-character screen. Without it the window never appears.
+By hand instead:
 
-**The tokens.** An item only truly exists if it appears in `Item.dbc`: the
-server ignores, at load time, any item missing from its copy, and the client
-shows a red question mark for any item missing from its own. The installer has
-already added the five tokens to both. In the game, it writes into the archive
-that provides `Item.dbc` when that archive is one of yours, `patch-Z.MPQ` for
-instance; when it comes from an official archive, into your last custom
-archive, or into a new `Data\patch-Z.MPQ` if you have none. The module's image
-goes into your last custom archive, under `Interface\ItemUpgrade`. Official
-archives are never modified, and only the five rows are added: everything else
-stays as it was.
+1. Take `DBFilesClient\Item.dbc` from the game's archives (the last one holding
+   it) and add to it, with a DBC editor, the rows of the `dbc` entry of
+   `installer.json`.
+2. Put it and the content of `data/art` (`Interface\ItemUpgrade\...`) into a patch
+   archive, `Data\patch-Z.MPQ` for instance, with an MPQ editor.
 
-Other players' clients need the same rows: give them the archive the installer
-wrote to, whose path its output shows.
+Every player also needs AIO's client addon, `AIO_Client`, in `Interface\AddOns`,
+ticked in the AddOns list: without it the window never opens.
 
 ---
 
 ## 5. Full check
 
-**Test 1, tokens display properly.** On a game master account:
-`.additem 83050 1`
+On a game master account:
 
-> Expected: an item named "Shard of Power" on an English client, "Éclat de
-> Puissance" on a French one, appears in your bag with a normal icon. Its
-> tooltip reads "Used to upgrade statistics." A red question
-> mark means the tokens are missing from the archive the client loads
-> (section 4).
-
-**Test 2, the window opens.** Click the anvil button on the minimap rim, or type
-`/iu`. The commands `/amelioration` and `/ameliorer` do the same thing, in every
-client language. A right click on a token opens it too.
-
-> Expected: an "Item Upgrades" window fades in. With no item selected it reads
-> "Drop an item here". A strip shows your equipped pieces. (With ForeverUI: the
-> Progression window opens on the "Item Upgrades" tab, items listed on the left.)
-
-**Test 3, the window reads an item.** Click an equipped piece in the strip, or
-drag an item from a bag onto the window.
-
-> Expected: the item name in its quality colour, then one line per upgradeable
-> stat. Each line shows the current value, an arrow, the value at the next rank,
-> the gain, and a bar of the rank reached out of 20. Hovering a line details the
-> price of the next rank.
-
-**Test 4, buying a rank.** Equip a piece carrying stats and note one of them,
-say 60 stamina. Select it in the window, tick stamina, check the price at the
-bottom, click "Upgrade".
-
-> Expected: rank 1 costs 350 gold and no token. "+1 rank(s)" floats up in the
-> middle of the window, the bar advances, and your character sheet shows
-> 63 stamina instead of 60. You are 350 gold poorer.
-
-**Test 5, the weapon lines.** Select the weapon in your main hand.
-
-> Expected: below its stats, two more lines, "Weapon damage" with the damage
-> range before and after the next step, and "Weapon speed" with the swing time
-> before and after. They are ticked and bought like the stats; the price of a
-> step is set in the configuration (section 6.9). A weapon in a bag shows the
-> damage line only: speed applies to a weapon in hand.
-
-**Test 6, the resource check.** Pick an item whose stat sits at rank 3 and tick
-it, while owning no Shard of Power.
-
-> Expected: the token appears in red in the price area, with the missing amount
-> in its tooltip, and the "Upgrade" button stays greyed out.
-
-**Test 7, the language.** Repeat test 3 on a client of the other language.
-
-> Expected: every text of the window, the stat names included, is in that
-> client's language.
-
-**Test 8, the commands of the window.** Type `.item_upgrade state 0 1` in the
-chat.
-
-> Expected: "This command belongs to the item upgrade window: open it with
-> /iu." Nothing else happens: those commands only answer the window.
+| # | Do this | Expect |
+|---|---|---|
+| 1 | `.additem 83050 1` | a *Shard of Power* with its icon; a red question mark means the client lacks the tokens (section 4) |
+| 2 | `/iu` | the "Item Upgrades" window opens (with ForeverUI: the "Item Upgrades" tab of the Progression window) |
+| 3 | Click an equipped piece in the window's strip | one line per upgradeable stat, with its rank out of 20 |
+| 4 | On a piece with 60 stamina, tick stamina and click "Upgrade" | 350 gold taken, 63 stamina on the character sheet |
+| 5 | Select the weapon in your main hand | two more lines, "Weapon damage" and "Weapon speed" |
+| 6 | Tick a stat at rank 3 with no *Shard of Power* | the token shows in red and "Upgrade" stays greyed out |
 
 If a result differs, see section 8.
 
@@ -622,30 +443,7 @@ point at identifiers that no longer exist.
 
 ---
 
-## 7. Understanding the tables and commands
-
-All in the characters database unless stated otherwise.
-
-**`mod_item_upgrade_stats`** is the scale. One row per stat and per rank.
-`stat_type` is the stat code, `stat_rank` the rank number, `stat_mod_pct` the
-percentage gained. `id` follows the rule
-`id = position of the stat + number of stats × (rank − 1)`.
-
-**`mod_item_upgrade_stats_req`** holds the prices. One row per requirement,
-several possible for one rank. `req_type` is 1 for gold, 2 for honor, 3 for
-arena, 4 for an item. For gold, honor and arena the amount is in `req_val1`.
-For an item, `req_val1` is its entry and `req_val2` the quantity.
-
-**`mod_item_upgrade_stats_req_override`** holds prices specific to one item.
-
-**`character_item_upgrade`** records what players bought: who, on which specific
-copy of an item, and which rank. Two sister tables do the same for weapons.
-
-**`item_template`, `item_template_locale` and `item_dbc`**, in the world
-database, describe the tokens; **`module_string`** and
-**`module_string_locale`** hold the texts.
-
-The commands:
+## 7. Commands
 
 | Command | Who | What it does |
 |---|---|---|
@@ -654,13 +452,6 @@ The commands:
 | `.item_upgrade reload` | administrator | reloads the scale and releases the lock |
 | `.item_upgrade state` | the window | describes an item, line by line |
 | `.item_upgrade upgrade` | the window | buys the ticked ranks |
-
-The last two travel through the core's addon command channel: the window sends
-them as addon messages and the module answers it line by line. Typed in the
-chat, they only say what they are for. A player can send them without the
-window all the same, and gains nothing by it: the module takes from them only
-the item's place, its guid and the targets, then works out the next ranks and
-their prices itself, checks them and takes them.
 
 ---
 
@@ -688,7 +479,7 @@ does not know the module's commands: the module is not compiled in. Go back to
 
 **The window shows raw numbers or text keys, such as `titre`.** Its texts did
 not arrive: `02_item_upgrade_strings.sql` was not applied, or the server was
-not restarted since. Check with the query of 3.4.
+not restarted since.
 
 **A chat message reads `[mod-item-upgrade] missing text` followed by a
 number.** That row is missing from `module_string`. Apply
