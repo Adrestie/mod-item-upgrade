@@ -402,6 +402,9 @@ restart instead.
 
 ### 6.13 Texts and languages
 
+Every text comes in English, French, German, Spanish (`esES`) and Russian;
+other clients get English.
+
 Every text lives in `data/sql/db-world/base/02_item_upgrade_strings.sql`: in
 English in the core's `module_string` table, in every other language in
 `module_string_locale`. Each player gets the row of their client's language,
@@ -420,7 +423,7 @@ so a reinstall keeps them, then restart. Without a restart:
 window.
 
 **The token names** are in `01_item_upgrade_world.sql`: English in
-`item_template`, French in `item_template_locale`. A new language takes one row
+`item_template`, the other languages in `item_template_locale`. A new language takes one row
 per token in the latter. The client caches item names, so players may need to
 clear their `Cache` folder to see a change.
 

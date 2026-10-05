@@ -2,7 +2,8 @@
 -- mod-item-upgrade : the power tokens (WORLD database)
 --
 -- 1. The five power tokens (83050-83054), the items the upgrade ranks ask
---    for, in English, with their French names in item_template_locale.
+--    for, in English, with their French, German, Spanish and Russian names in
+--    item_template_locale.
 -- 2. Their item_dbc rows (the SQL override of the server's Item.dbc: without
 --    them, ObjectMgr::LoadItemTemplates simply IGNORES any item missing from
 --    Item.dbc). The client needs those rows too: see tools/patch_item_dbc.py.
@@ -34,7 +35,22 @@ INSERT INTO `item_template_locale` (`ID`, `locale`, `Name`, `Description`, `Veri
   (83051, 'frFR', 'Fragment de Puissance', 'Permet d''améliorer des statistiques.', 0),
   (83052, 'frFR', 'Noyau de Puissance', 'Permet d''améliorer des statistiques.', 0),
   (83053, 'frFR', 'Gemme de Puissance', 'Permet d''améliorer des statistiques.', 0),
-  (83054, 'frFR', 'Couronne de Puissance', 'Permet d''améliorer des statistiques.', 0);
+  (83054, 'frFR', 'Couronne de Puissance', 'Permet d''améliorer des statistiques.', 0),
+  (83050, 'deDE', 'Splitter der Macht', 'Dient zum Aufwerten von Werten.', 0),
+  (83051, 'deDE', 'Fragment der Macht', 'Dient zum Aufwerten von Werten.', 0),
+  (83052, 'deDE', 'Kern der Macht', 'Dient zum Aufwerten von Werten.', 0),
+  (83053, 'deDE', 'Edelstein der Macht', 'Dient zum Aufwerten von Werten.', 0),
+  (83054, 'deDE', 'Krone der Macht', 'Dient zum Aufwerten von Werten.', 0),
+  (83050, 'esES', 'Esquirla de poder', 'Sirve para mejorar estadísticas.', 0),
+  (83051, 'esES', 'Fragmento de poder', 'Sirve para mejorar estadísticas.', 0),
+  (83052, 'esES', 'Núcleo de poder', 'Sirve para mejorar estadísticas.', 0),
+  (83053, 'esES', 'Gema de poder', 'Sirve para mejorar estadísticas.', 0),
+  (83054, 'esES', 'Corona de poder', 'Sirve para mejorar estadísticas.', 0),
+  (83050, 'ruRU', 'Осколок силы', 'Используется для улучшения характеристик.', 0),
+  (83051, 'ruRU', 'Фрагмент силы', 'Используется для улучшения характеристик.', 0),
+  (83052, 'ruRU', 'Ядро силы', 'Используется для улучшения характеристик.', 0),
+  (83053, 'ruRU', 'Самоцвет силы', 'Используется для улучшения характеристик.', 0),
+  (83054, 'ruRU', 'Корона силы', 'Используется для улучшения характеристик.', 0);
 
 DELETE FROM `item_dbc` WHERE `ID` BETWEEN 83050 AND 83054;
 INSERT INTO `item_dbc` (`ID`, `ClassID`, `SubclassID`, `Sound_Override_Subclassid`, `Material`, `DisplayInfoID`, `InventoryType`, `SheatheType`) VALUES
