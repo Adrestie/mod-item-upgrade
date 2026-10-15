@@ -5,6 +5,11 @@ gear rank by rank, for gold and tokens, in a window (ALE and AIO). Weapons have
 two tracks of their own, damage and swing speed, and looted items can arrive
 already upgraded.
 
+**Languages:** English (`enUS`, `enGB`), French (`frFR`), German (`deDE`),
+Spanish (`esES`) and Russian (`ruRU`), for the window, the chat messages and the
+token names. Every other client gets English; section 6.13 explains how to add
+a language.
+
 This is an extended fork of
 **[silviu20092/mod-item-upgrade](https://github.com/silviu20092/mod-item-upgrade)**;
 [section 11](#11-differences-from-the-original-module) lists what changed.
@@ -580,8 +585,9 @@ new names.
   core's addon command channel. `upgrade` buys the next rank of several stats
   and of the weapon's damage and speed at once, for the sum of their prices,
   all or nothing, with the same checks as the NPC had.
-- **Every text in `module_string`**, English and French, following each client's
-  language; the stat and slot names included.
+- **Every text in `module_string`**, in English, French, German, Spanish and
+  Russian, following each client's language; the stat and slot names
+  included.
 - **A far wider default scale**, laid down by `c_item_upgrade_scale.sql`:
   41 stats over 20 ranks, where the original ships 8 stats over 2 ranks.
 - **Five tokens** in `01_item_upgrade_world.sql`.
