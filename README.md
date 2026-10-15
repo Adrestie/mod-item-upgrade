@@ -533,8 +533,13 @@ It then checks that nothing is left and prints the build commands: rebuild, and
 the module is gone from the world server. If you had started removing the
 module by hand, run the installer anyway: it removes whatever is left.
 
-The installer only installs or removes: run on an installed module, it removes
-it, purchased upgrades included. It has no upgrade mode.
+To move to a newer version instead, run the installer on the new version's
+folder and choose **Update**: it removes the installed version and installs
+the new one, but keeps the module's ten tables (purchased upgrades, the scale
+and your item lists), the token drops of `world_mythic_loot` and your
+`mod_item_upgrade.conf`, whose settings the new one takes over. Rebuild; on
+the next start, the core updater applies the module's SQL again, and
+`c_item_upgrade_scale.sql` rebuilds the scale with every purchase kept.
 
 Tokens players still hold vanish at their next login: the core removes items it
 no longer knows from bags, banks and mail.

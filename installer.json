@@ -36,6 +36,7 @@
   "database": {
     "characters": {
       "tables": ["character_item_upgrade", "character_weapon_upgrade", "character_weapon_speed_upgrade", "mod_item_upgrade_stats", "mod_item_upgrade_stats_req", "mod_item_upgrade_stats_req_override", "mod_item_upgrade_allowed_items", "mod_item_upgrade_blacklisted_items", "mod_item_upgrade_allowed_stats_items", "mod_item_upgrade_blacklisted_stats_items"],
+      "kept_on_update": ["character_item_upgrade", "character_weapon_upgrade", "character_weapon_speed_upgrade", "mod_item_upgrade_stats", "mod_item_upgrade_stats_req", "mod_item_upgrade_stats_req_override", "mod_item_upgrade_allowed_items", "mod_item_upgrade_blacklisted_items", "mod_item_upgrade_allowed_stats_items", "mod_item_upgrade_blacklisted_stats_items"],
       "rows": [
         {
           "table": "updates",
@@ -75,7 +76,8 @@
         },
         {
           "table": "world_mythic_loot",
-          "where": "itemid IN ({ids:Item.dbc})"
+          "where": "itemid IN ({ids:Item.dbc})",
+          "kept_on_update": true
         }
       ]
     }
