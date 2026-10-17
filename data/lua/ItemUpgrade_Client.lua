@@ -33,6 +33,38 @@
     dans L, état dans S, fonctions dans H.
 ------------------------------------------------------------------------------]]
 local AIO = AIO or require("AIO")
+
+-- Côté serveur, avant d'expédier la fenêtre : ce dont elle a besoin existe-t-il ?
+-- Ce fichier arrive par lua_scripts, le module C++ et son SQL par la
+-- compilation (2026-10-17 : fenêtre présente, module absent, erreurs à
+-- chaque clic). Sans ses tables, ses textes ou sa commande, la fenêtre ne
+-- part pas et le journal dit pourquoi.
+if AIO.IsServer() then
+    local manques = {}
+    local tables = { character_item_upgrade = true, character_weapon_upgrade = true,
+        character_weapon_speed_upgrade = true, mod_item_upgrade_stats = true,
+        mod_item_upgrade_stats_req = true, mod_item_upgrade_stats_req_override = true,
+        mod_item_upgrade_allowed_items = true, mod_item_upgrade_blacklisted_items = true,
+        mod_item_upgrade_allowed_stats_items = true, mod_item_upgrade_blacklisted_stats_items = true }
+    local q = CharDBQuery("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() "
+                          .. "AND TABLE_NAME LIKE '%item%upgrade%'")
+    if q then
+        repeat tables[q:GetString(0):lower()] = nil until not q:NextRow()
+    end
+    for t in pairs(tables) do table.insert(manques, "table " .. t) end
+    if not WorldDBQuery("SELECT 1 FROM module_string WHERE module = 'mod-item-upgrade' LIMIT 1") then
+        table.insert(manques, "module_string texts")
+    end
+    if not WorldDBQuery("SELECT 1 FROM command WHERE name = 'item_upgrade' LIMIT 1") then
+        table.insert(manques, "command item_upgrade")
+    end
+    if #manques > 0 then
+        print("[ItemUpgrade] missing: " .. table.concat(manques, ", ") .. ". Window not sent: "
+              .. "reconfigure CMake and rebuild the worldserver with mod-item-upgrade to apply its SQL.")
+        return
+    end
+end
+
 if AIO.AddAddon() then
     return                                  -- côté serveur : on s'arrête ici
 end
