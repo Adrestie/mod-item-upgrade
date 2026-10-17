@@ -2568,8 +2568,8 @@ end
 
 -- ---------------------------------------------------------------------------
 -- DÉBUT DE LA FENÊTRE PROGRESSION -- copie commune, IDENTIQUE dans
--- Attriboost_Client.lua et ItemUpgrade_Client.lua : toute modification se
--- reporte dans l'autre fichier.
+-- Attriboost_Client.lua, ItemUpgrade_Client.lua et Tarot_Client.lua
+-- (mod-stellar-tarot) : toute modification se reporte dans les autres.
 -- ---------------------------------------------------------------------------
 -- Une fenêtre au thème de Camelot -- le LegacySystemFrame de camelot -- dont
 -- les modules du serveur ajoutent les onglets (demande du 2026-09-29 : « si
@@ -2664,17 +2664,24 @@ end
 --     en morceaux posés à la main.
 --   * Le panneau se déclare par ses attributs UIPanelLayout-*, sans toucher
 --     à la table UIPanelWindows du client.
+--   * UNE PAGE PEUT DEMANDER SA TAILLE (demande du 2026-10-17 : l'onglet de
+--     Stellar Tarot « doit redimensionner la page pour que toute l'interface
+--     rentre correctement. Si la page venait à sortir de l'écran, il faut la
+--     repositionner correctement ») : la fenêtre prend la taille de la page
+--     choisie, celle de 673 x 594 sinon ; trop grande pour l'écran, elle se
+--     réduit (son échelle) ; sortie de l'écran, elle y revient.
 --
 -- CE QUE LES MODULES APPELLENT (ils testent Progression.Ajouter et
 -- Progression.Kit) :
---   P.Ajouter{ cle, ordre, titre, icone, construire, nomFenetre, portrait }
+--   P.Ajouter{ cle, ordre, titre, icone, construire, nomFenetre, portrait, taille }
 --     -- déclare une page et rend son cadre (toute la fenêtre ;
 --     construire(page) le remplit, une fois, à sa première ouverture). titre :
 --     un texte, ou une fonction qui le rend. ordre : la place de l'onglet (le
 --     plus petit en haut). nomFenetre : le nom de la fenêtre et du
 --     micro-bouton (texte ou fonction) ; portrait : le fichier du portrait ;
---     ceux de la page qui crée la fenêtre. Redéclarer une clé (un « .reload
---     ale ») remplace sa page par un cadre neuf.
+--     ceux de la page qui crée la fenêtre. taille : { largeur, hauteur } de
+--     la fenêtre quand cette page est choisie (sinon 673 x 594). Redéclarer
+--     une clé (un « .reload ale ») remplace sa page par un cadre neuf.
 --   P.Ouvrir(cle), P.Basculer(cle), P.Fermer(), P.Montree(cle).
 --   P.Kit : la trousse de dessin écrite ici (voir plus bas) ; une page y
 --     ajoute les coordonnées de ses propres éléments par K.AjouterArt.
@@ -3280,7 +3287,55 @@ if not (Progression and Progression.Ajouter) and ForeverUI and ForeverUI.AddMicr
             majMicro()
         end)
         P.fenetre = f
+        -- le client la place (ShowUIPanel, UpdateUIPanelPositions) : puis elle
+        -- se garde dans l'écran, et encore quand l'écran ou l'échelle change
+        hooksecurefunc("UpdateUIPanelPositions", function() P.Recadrer() end)
+        f:RegisterEvent("DISPLAY_SIZE_CHANGED")
+        f:RegisterEvent("UI_SCALE_CHANGED")
+        f:SetScript("OnEvent", function() P.Recadrer() end)
         return f
+    end
+
+    -- LA TAILLE DE LA PAGE CHOISIE : la sienne, sinon celle de la fenêtre. Le
+    -- panneau déclare sa nouvelle largeur (onglets compris, comme plus haut).
+    local function dimensionner(d)
+        local f = P.fenetre
+        local t = (d and d.taille) or N.fenetre
+        local w, h = t[1] or N.fenetre[1], t[2] or N.fenetre[2]
+        if math.abs(f:GetWidth() - w) < 0.5 and math.abs(f:GetHeight() - h) < 0.5 then return false end
+        f:SetWidth(w)
+        f:SetHeight(h)
+        f:SetAttribute("UIPanelLayout-width", w + 85)
+        return true
+    end
+
+    -- DANS L'ÉCRAN : plus grande que lui, la fenêtre se réduit -- les onglets
+    -- à sa droite et le métal qui la déborde compris ; sortie de l'écran, elle
+    -- y revient.
+    local DEBORDS = { gauche = 13, droite = N.onglet.cote + 2, haut = 16, bas = 8 }
+    function P.Recadrer()
+        local f = P.fenetre
+        if not (f and f:IsShown()) then return end
+        local D = DEBORDS
+        local W, H = UIParent:GetWidth(), UIParent:GetHeight()
+        local w = f:GetWidth() + D.gauche + D.droite
+        local h = f:GetHeight() + D.haut + D.bas
+        local s = math.min(1, W / w, H / h)
+        if math.abs(f:GetScale() - s) > 0.001 then f:SetScale(s) end
+        local l, t = f:GetLeft(), f:GetTop()
+        if not l then return end
+        -- en unités de l'écran (celles d'UIParent)
+        local g, d = (l - D.gauche) * s, (f:GetRight() + D.droite) * s
+        local hh, b = (t + D.haut) * s, (f:GetBottom() - D.bas) * s
+        local dx, dy = 0, 0
+        if d > W then dx = W - d end
+        if g + dx < 0 then dx = -g end
+        if hh > H then dy = H - hh end
+        if b + dy < 0 then dy = -b end
+        if dx ~= 0 or dy ~= 0 then
+            f:ClearAllPoints()
+            f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", l + dx / s, t + dy / s)
+        end
     end
 
     -- SelectPage : la page clé se montre (construite à sa première ouverture),
@@ -3296,8 +3351,10 @@ if not (Progression and Progression.Ajouter) and ForeverUI and ForeverUI.AddMicr
             if c ~= cle then P.pages[c].page:Hide() end
         end
         P.courante = cle
+        if dimensionner(d) and P.fenetre:IsShown() then UpdateUIPanelPositions(P.fenetre) end
         d.page:Show()
         majOnglets()
+        P.Recadrer()
     end
 
     -- tri des onglets : ordre, puis clé
@@ -3325,6 +3382,7 @@ if not (Progression and Progression.Ajouter) and ForeverUI and ForeverUI.AddMicr
         P.pages[d.cle] = {
             cle = d.cle, ordre = tonumber(d.ordre) or 100, titre = d.titre or d.cle, icone = d.icone,
             construire = d.construire, page = page,
+            taille = type(d.taille) == "table" and d.taille or nil,
         }
         table.sort(P.ordre, avant)
         if montree then P.Choisir(d.cle) end
@@ -3345,6 +3403,9 @@ if not (Progression and Progression.Ajouter) and ForeverUI and ForeverUI.AddMicr
         if f:IsShown() and not (P.courante == cle and P.pages[cle].page:IsShown()) then
             P.Choisir(cle)
         end
+        -- ShowUIPanel la place par la méthode du client, sans passer par le
+        -- UpdateUIPanelPositions global que suit P.Construire
+        P.Recadrer()
     end
 
     function P.Fermer()
