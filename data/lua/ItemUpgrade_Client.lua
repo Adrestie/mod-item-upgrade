@@ -47,7 +47,7 @@ if AIO.IsServer() then
         mod_item_upgrade_allowed_items = true, mod_item_upgrade_blacklisted_items = true,
         mod_item_upgrade_allowed_stats_items = true, mod_item_upgrade_blacklisted_stats_items = true }
     local q = CharDBQuery("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() "
-                          .. "AND TABLE_NAME LIKE '%item%upgrade%'")
+                          .. "AND TABLE_NAME LIKE '%upgrade%'")
     if q then
         repeat tables[q:GetString(0):lower()] = nil until not q:NextRow()
     end
@@ -58,6 +58,9 @@ if AIO.IsServer() then
     if not WorldDBQuery("SELECT 1 FROM command WHERE name = 'item_upgrade' LIMIT 1") then
         table.insert(manques, "command item_upgrade")
     end
+    -- lu par ItemUpgrade_Serveur.lua, chargé après ce fichier : sans fenêtre,
+    -- pas de textes (le client ne connaîtrait pas leur destinataire)
+    ITEM_UPGRADE_PRET = #manques == 0
     if #manques > 0 then
         print("[ItemUpgrade] missing: " .. table.concat(manques, ", ") .. ". Window not sent: "
               .. "reconfigure CMake and rebuild the worldserver with mod-item-upgrade to apply its SQL.")

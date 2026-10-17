@@ -15,6 +15,13 @@
 local AIO = AIO or require("AIO")
 local fmt = string.format
 
+-- ItemUpgrade_Client.lua, chargé avant ce fichier, a vérifié les tables, les
+-- textes et la commande du module : s'il n'a pas envoyé la fenêtre, ses
+-- textes ne partent pas non plus.
+if ITEM_UPGRADE_PRET == false then
+    return
+end
+
 -- ---------------------------------------------------------------------------
 -- Textes, lus une fois par chargement du script
 -- ---------------------------------------------------------------------------
